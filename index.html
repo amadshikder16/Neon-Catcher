@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Neon Catcher — Free Online Game</title>
+  <meta name="description" content="Neon Catcher is a free online skill game. Tap the glowing orbs before they fall. Compete for the Top 10 high scores." />
+
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9423838926601541"
+       crossorigin="anonymous"></script>
+  <!-- ===== End of AdSense code ===== -->
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a12;
+      color: #e0e0ff;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+
+    #start-screen, #game-over-screen, #info-screen {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, #1a1a2e 0%, #0a0a12 70%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      padding: 20px;
+      text-align: center;
+      overflow-y: auto;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 8vw, 3.2rem);
+      background: linear-gradient(90deg, #00f5ff, #ff00aa, #00f5ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      color: #8888aa;
+      margin-bottom: 24px;
+      font-size: 0.95rem;
+      max-width: 340px;
+      line-height: 1.5;
+    }
+
+    input[type="text"] {
+      background: #16162a;
+      border: 2px solid #3a3a5a;
+      color: #fff;
+      padding: 14px 18px;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      width: min(280px, 85vw);
+      text-align: center;
+      outline: none;
+      margin-bottom: 18px;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus { border-color: #00f5ff; }
+
+    button {
+      background: linear-gradient(135deg, #00f5ff, #0088ff);
+      color: #000;
+      border: none;
+      padding: 14px 36px;
+      border-radius: 50px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin: 8px;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 20px rgba(0, 245, 255, 0.3);
+    }
+    button:active { transform: scale(0.96); }
+    button.secondary {
+      background: transparent;
+      color: #00f5ff;
+      border: 2px solid #00f5ff;
+      box-shadow: none;
+    }
+    button.small {
+      padding: 8px 18px;
+      font-size: 0.9rem;
+      margin: 4px;
+    }
+
+    #leaderboard {
+      margin-top: 24px;
+      width: min(340px, 90vw);
+      background: rgba(20, 20, 40, 0.7);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid #2a2a4a;
+    }
+    #leaderboard h2 {
+      font-size: 1.1rem;
+      color: #00f5ff;
+      margin-bottom: 12px;
+    }
+    .lb-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 4px;
+      font-size: 0.95rem;
+      border-bottom: 1px solid #222240;
+    }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-rank { color: #8888aa; width: 28px; }
+    .lb-name { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lb-score { color: #00f5ff; font-weight: 600; }
+
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      pointer-events: none;
+      background: linear-gradient(to bottom, rgba(10,10,18,0.85), transparent);
+    }
+    #score-display, #lives-display {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+    #lives-display { color: #ff4d6d; }
+
+    canvas {
+      display: block;
+      background: #0a0a12;
+      touch-action: none;
+    }
+
+    .hidden { display: none !important; }
+
+    #final-score {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: #00f5ff;
+      margin: 12px 0 24px;
+    }
+
+    .info-content {
+      max-width: 480px;
+      text-align: left;
+      background: rgba(20,20,40,0.6);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid #2a2a4a;
+      margin: 16px 0;
+      line-height: 1.6;
+      font-size: 0.95rem;
+      color: #c0c0e0;
+    }
+    .info-content h2 {
+      color: #00f5ff;
+      margin-bottom: 12px;
+      font-size: 1.3rem;
+    }
+    .info-content h3 {
+      color: #ff00aa;
+      margin: 16px 0 8px;
+      font-size: 1.05rem;
+    }
+    .info-content p { margin-bottom: 10px; }
+    .info-content ul {
+      margin: 8px 0 12px 20px;
+    }
+    .info-content a {
+      color: #00f5ff;
+    }
+
+    .footer-links {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- START SCREEN -->
+  <div id="start-screen">
+    <h1>NEON CATCHER</h1>
+    <p class="subtitle">
+      Free online skill game. Tap the glowing orbs before they hit the ground.
+      Compete for the Top 10 high scores. No login required.
+    </p>
+
+    <input type="text" id="player-name" placeholder="Enter your name" maxlength="12" autocomplete="off" />
+    <button id="start-btn">PLAY NOW</button>
+    <button class="secondary" id="show-lb-btn">Top 10 Scores</button>
+
+    <div id="leaderboard" class="hidden">
+      <h2>🏆 TOP 10</h2>
+      <div id="lb-list"></div>
+    </div>
+
+    <div class="footer-links">
+      <button class="secondary small" id="how-to-play-btn">How to Play</button>
+      <button class="secondary small" id="privacy-btn">Privacy Policy</button>
+      <button class="secondary small" id="about-btn">About</button>
+    </div>
+  </div>
+
+  <!-- GAME OVER SCREEN -->
+  <div id="game-over-screen" class="hidden">
+    <h1>GAME OVER</h1>
+    <div id="final-score">0</div>
+    <p id="new-record" class="hidden" style="color:#00ff99; margin-bottom:12px;">🎉 New High Score!</p>
+    <button id="retry-btn">PLAY AGAIN</button>
+    <button class="secondary" id="menu-btn">MAIN MENU</button>
+  </div>
+
+  <!-- INFO SCREEN (How to Play / Privacy / About) -->
+  <div id="info-screen" class="hidden">
+    <div class="info-content" id="info-content"></div>
+    <button id="close-info-btn">Back</button>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div id="score-display">Score: 0</div>
+    <div id="lives-display">❤ ❤ ❤</div>
+  </div>
+
+  <canvas id="game"></canvas>
+
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const startScreen = document.getElementById('start-screen');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const infoScreen = document.getElementById('info-screen');
+    const infoContent = document.getElementById('info-content');
+    const hud = document.getElementById('hud');
+    const scoreDisplay = document.getElementById('score-display');
+    const livesDisplay = document.getElementById('lives-display');
+    const finalScoreEl = document.getElementById('final-score');
+    const newRecordEl = document.getElementById('new-record');
+    const lbList = document.getElementById('lb-list');
+    const leaderboardDiv = document.getElementById('leaderboard');
+
+    let W, H;
+    let score = 0;
+    let lives = 3;
+    let orbs = [];
+    let particles = [];
+    let gameRunning = false;
+    let lastSpawn = 0;
+    let spawnInterval = 900;
+    let playerName = 'Player';
+    let animationId;
+
+    function resize() {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = W;
+      canvas.height = H;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function getScores() {
+      try {
+        return JSON.parse(localStorage.getItem('neonCatcherScores') || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function saveScore(name, points) {
+      let scores = getScores();
+      scores.push({ name: name.slice(0, 12), score: points, date: Date.now() });
+      scores.sort((a, b) => b.score - a.score);
+      scores = scores.slice(0, 10);
+      localStorage.setItem('neonCatcherScores', JSON.stringify(scores));
+      return scores;
+    }
+
+    function renderLeaderboard() {
+      const scores = getScores();
+      if (scores.length === 0) {
+        lbList.innerHTML = '<div style="color:#666;padding:8px">No scores yet. Be the first!</div>';
+        return;
+      }
+      lbList.innerHTML = scores.map((s, i) => `
+        <div class="lb-row">
+          <span class="lb-rank">#${i + 1}</span>
+          <span class="lb-name">${s.name}</span>
+          <span class="lb-score">${s.score}</span>
+        </div>
+      `).join('');
+    }
+
+    class Orb {
+      constructor() {
+        this.r = 18 + Math.random() * 14;
+        this.x = this.r + Math.random() * (W - this.r * 2);
+        this.y = -this.r - 10;
+        this.vy = 1.8 + Math.random() * 1.4 + score * 0.012;
+        this.hue = Math.floor(Math.random() * 360);
+      }
+
+      update(dt) {
+        this.y += this.vy * dt * 60;
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r + 8, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${this.hue}, 100%, 60%, 0.15)`;
+        ctx.fill();
+
+        const grad = ctx.createRadialGradient(this.x - this.r * 0.3, this.y - this.r * 0.3, 0, this.x, this.y, this.r);
+        grad.addColorStop(0, `hsl(${this.hue}, 100%, 75%)`);
+        grad.addColorStop(1, `hsl(${this.hue}, 100%, 45%)`);
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(this.x - this.r * 0.3, this.y - this.r * 0.3, this.r * 0.35, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.fill();
+      }
+    }
+
+    function spawnParticles(x, y, hue) {
+      for (let i = 0; i < 10; i++) {
+        particles.push({
+          x, y,
+          vx: (Math.random() - 0.5) * 8,
+          vy: (Math.random() - 0.5) * 8,
+          life: 1,
+          hue
+        });
+      }
+    }
+
+    let lastTime = 0;
+    function loop(timestamp) {
+      if (!gameRunning) return;
+      const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+      lastTime = timestamp;
+
+      ctx.fillStyle = '#0a0a12';
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.strokeStyle = 'rgba(40,40,80,0.25)';
+      ctx.lineWidth = 1;
+      const grid = 40;
+      for (let x = 0; x < W; x += grid) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
+      }
+      for (let y = 0; y < H; y += grid) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y);
+        ctx.stroke();
+      }
+
+      if (timestamp - lastSpawn > spawnInterval) {
+        orbs.push(new Orb());
+        lastSpawn = timestamp;
+        spawnInterval = Math.max(380, 900 - score * 4);
+      }
+
+      for (let i = orbs.length - 1; i >= 0; i--) {
+        const o = orbs[i];
+        o.update(dt);
+        o.draw();
+
+        if (o.y - o.r > H) {
+          orbs.splice(i, 1);
+          lives--;
+          updateLives();
+          if (lives <= 0) {
+            endGame();
+            return;
+          }
+        }
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.04;
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3 * p.life, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${p.hue}, 100%, 60%, ${p.life})`;
+        ctx.fill();
+      }
+
+      animationId = requestAnimationFrame(loop);
+    }
+
+    function handleTap(x, y) {
+      if (!gameRunning) return;
+      for (let i = orbs.length - 1; i >= 0; i--) {
+        const o = orbs[i];
+        const dx = x - o.x;
+        const dy = y - o.y;
+        if (dx * dx + dy * dy < (o.r + 12) * (o.r + 12)) {
+          spawnParticles(o.x, o.y, o.hue);
+          orbs.splice(i, 1);
+          score += 1;
+          scoreDisplay.textContent = `Score: ${score}`;
+          break;
+        }
+      }
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      handleTap(e.clientX - rect.left, e.clientY - rect.top);
+    });
+
+    function updateLives() {
+      livesDisplay.textContent = '❤ '.repeat(lives).trim() || '💀';
+    }
+
+    function startGame() {
+      const nameInput = document.getElementById('player-name');
+      playerName = (nameInput.value.trim() || 'Player').slice(0, 12);
+      nameInput.value = playerName;
+
+      score = 0;
+      lives = 3;
+      orbs = [];
+      particles = [];
+      spawnInterval = 900;
+      lastSpawn = 0;
+      scoreDisplay.textContent = 'Score: 0';
+      updateLives();
+
+      startScreen.classList.add('hidden');
+      gameOverScreen.classList.add('hidden');
+      infoScreen.classList.add('hidden');
+      hud.classList.remove('hidden');
+      gameRunning = true;
+      lastTime = performance.now();
+      animationId = requestAnimationFrame(loop);
+    }
+
+    function endGame() {
+      gameRunning = false;
+      cancelAnimationFrame(animationId);
+      hud.classList.add('hidden');
+
+      finalScoreEl.textContent = score;
+      const scores = getScores();
+      const isHigh = scores.length < 10 || score > (scores[scores.length - 1]?.score || 0);
+      if (isHigh && score > 0) {
+        saveScore(playerName, score);
+        newRecordEl.classList.remove('hidden');
+      } else {
+        newRecordEl.classList.add('hidden');
+      }
+
+      gameOverScreen.classList.remove('hidden');
+    }
+
+    const pages = {
+      howto: `
+        <h2>How to Play</h2>
+        <p>Neon Catcher is a simple but challenging skill game.</p>
+        <h3>Rules</h3>
+        <ul>
+          <li>Colorful orbs fall from the top of the screen.</li>
+          <li>Tap (or click) the orbs before they reach the bottom.</li>
+          <li>Each successful tap gives you +1 point.</li>
+          <li>You have 3 lives. If an orb hits the bottom, you lose one life.</li>
+          <li>The game gets faster as your score increases.</li>
+        </ul>
+        <h3>Goal</h3>
+        <p>Get the highest score possible and enter the Top 10 leaderboard. Scores are saved locally in your browser.</p>
+      `,
+      privacy: `
+        <h2>Privacy Policy</h2>
+        <p>Last updated: October 2026</p>
+        <p>Neon Catcher is a free browser game. We respect your privacy.</p>
+        
+        <h3>Information We Collect</h3>
+        <ul>
+          <li><strong>Player Name:</strong> Only the name you type is stored locally in your browser (localStorage) for the high score list. We do not send this data to any server.</li>
+          <li><strong>High Scores:</strong> Saved only on your device. They are not shared with us or any third party.</li>
+        </ul>
+
+        <h3>Advertising</h3>
+        <p>This website uses Google AdSense to display advertisements. Google may use cookies and collect data according to their own privacy policy to show personalized ads.</p>
+        <p>You can learn more about how Google uses data here:<br>
+        <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google Ads Policy</a></p>
+
+        <h3>Third-Party Services</h3>
+        <p>We only use Google AdSense for advertising. No other tracking or analytics services are currently used.</p>
+
+        <h3>Contact</h3>
+        <p>If you have any questions about this privacy policy, you can contact the site owner through the website.</p>
+      `,
+      about: `
+        <h2>About Neon Catcher</h2>
+        <p>Neon Catcher is a free, lightweight HTML5 skill game created for fun and competition.</p>
+        <p>No registration or login is required. Just enter a name and start playing.</p>
+        <p>The game runs entirely in your browser. High scores are stored locally on your device.</p>
+        <h3>Features</h3>
+        <ul>
+          <li>Fast-paced neon visuals</li>
+          <li>Increasing difficulty</li>
+          <li>Local Top 10 leaderboard</li>
+          <li>Works on mobile and desktop</li>
+          <li>No download needed</li>
+        </ul>
+        <p>Enjoy the game and try to beat the high scores!</p>
+      `
+    };
+
+    function showInfo(type) {
+      infoContent.innerHTML = pages[type];
+      startScreen.classList.add('hidden');
+      gameOverScreen.classList.add('hidden');
+      infoScreen.classList.remove('hidden');
+    }
+
+    document.getElementById('start-btn').addEventListener('click', startGame);
+    document.getElementById('retry-btn').addEventListener('click', startGame);
+    document.getElementById('menu-btn').addEventListener('click', () => {
+      gameOverScreen.classList.add('hidden');
+      startScreen.classList.remove('hidden');
+      leaderboardDiv.classList.add('hidden');
+      renderLeaderboard();
+    });
+    document.getElementById('show-lb-btn').addEventListener('click', () => {
+      leaderboardDiv.classList.toggle('hidden');
+      renderLeaderboard();
+    });
+    document.getElementById('how-to-play-btn').addEventListener('click', () => showInfo('howto'));
+    document.getElementById('privacy-btn').addEventListener('click', () => showInfo('privacy'));
+    document.getElementById('about-btn').addEventListener('click', () => showInfo('about'));
+    document.getElementById('close-info-btn').addEventListener('click', () => {
+      infoScreen.classList.add('hidden');
+      startScreen.classList.remove('hidden');
+    });
+
+    document.getElementById('player-name').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') startGame();
+    });
+
+    renderLeaderboard();
+  </script>
+</body>
+</html>
